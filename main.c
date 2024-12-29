@@ -17,7 +17,7 @@ void Warning(char message[]){
     printf("\033[33mWARNING: %s\033[37m\n", message);
 }
 
-char* JoinPaths(const char* part1, const char* part2){
+char* JoinStrings(const char* part1, const char* part2, int slash){
     size_t len1 = strlen(part1);
     size_t len2 = strlen(part2);
 
@@ -25,7 +25,7 @@ char* JoinPaths(const char* part1, const char* part2){
 
     strcpy(result, part1);
 
-    if (part1[len1-1] != '/'){
+    if (part1[len1-1] != '/' && slash){
         strcat(result, "/");
     }
 
@@ -106,7 +106,7 @@ void AllSections(char* NoteDirectory, char** AllSectionsArr){
 }
 
 char** GetSectionContent(char* NoteDirectory,int* SelectionID, char** AllSectionsArr){
-    DIR* dir = opendir(JoinPaths(NoteDirectory, AllSectionsArr[*SelectionID]));
+    DIR* dir = opendir(JoinStrings(NoteDirectory, AllSectionsArr[*SelectionID], 1));
 
     struct dirent* d;
 
@@ -139,37 +139,49 @@ char** GetSectionContent(char* NoteDirectory,int* SelectionID, char** AllSection
 
 void SetSection(int* SectionID, int InputID){
     if (InputID < 0 || InputID > 255){
-        Error("Input id is out of range");
+        Error("Input id is out of range, SectionID");
         return;
     }
 
     *SectionID = InputID;
 }
 
+void SetProject(int* ProjectID, int InputID){
+    if(InputID < 0 || InputID > 255){
+        Error("Input id is out of range, ProjectID");
+        return;
+    }
+
+    *ProjectID = InputID;
+}
+
+void CreateProjectFiles(char* LunchCommand, char* NoteDirectory, char** AllSectionsArr, char** ProjectContent, int* SelectionID, int* ProjectID){
+    system(JoinStrings(LunchCommand, JoinStrings(NoteDirectory, JoinStrings(AllSectionsArr[*SelectionID], ProjectContent[*ProjectID], 1), 1), 0));
+}
+
+void RunProjects(char* LunchCommand, char* NoteDirectory, char** AllSectionsArr, char** ProjectContent, int* SelectionID, int* ProjectID){
+    system(JoinStrings(LunchCommand, JoinStrings(NoteDirectory, JoinStrings(AllSectionsArr[*SelectionID], ProjectContent[*ProjectID], 1), 1), 0));
+}
+
 int main(){
     // Set up
     char NoteDirectory[] = "/run/media/martin/Elements/School";
     int SelectionID = -1;
+    int ProjectID = -1;
     char** AllSectionsArr = malloc(256 * sizeof(char*));
     char** ProjectContent = malloc(256 * sizeof(char*));
 
     AllSections(NoteDirectory, AllSectionsArr);
 
     // Main loop
-    //ReadConfig();
-    //char name[] = "test";
-    //CreateNewSection(name, NoteDirectory);
-    //ChackForNoteDirectory(NoteDirectory);
 
+    /*
     SetSection(&SelectionID, 0);
+    SetProject(&ProjectID, 0);
     ProjectContent = GetSectionContent(NoteDirectory, &SelectionID, AllSectionsArr);
 
-    printf("%s\n", ProjectContent[0]);
-
-    SetSection(&SelectionID, 1);
-    ProjectContent = GetSectionContent(NoteDirectory, &SelectionID, AllSectionsArr);
-
-    printf("%s\n", ProjectContent[0]);
+   RunProjects("sh test.sh ", NoteDirectory, AllSectionsArr, ProjectContent, &SelectionID, &ProjectID);
+   */
 
     // Cleaning and shut down
     return 0;
