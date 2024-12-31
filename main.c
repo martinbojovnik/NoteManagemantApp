@@ -6,6 +6,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <gtk/gtk.h>
+
 #define CONFIG_SIZE 1024
 #define SECTION_SIZE 256
 
@@ -163,7 +165,29 @@ void RunProjects(char* LunchCommand, char* NoteDirectory, char** AllSectionsArr,
     system(JoinStrings(LunchCommand, JoinStrings(NoteDirectory, JoinStrings(AllSectionsArr[*SelectionID], ProjectContent[*ProjectID], 1), 1), 0));
 }
 
-int main(){
+void ApplyCssStyle(GtkWidget* widget, char* StyleType){
+    GtkCssProvider *css_provider = gtk_css_provider_new();
+    GError* error = NULL;
+
+    gtk_css_provider_load_from_path(css_provider, StyleType);
+
+    gtk_style_context_add_provider(gtk_widget_get_style_context(widget), GTK_STYLE_PROVIDER(css_provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+    g_object_unref(css_provider);
+}
+
+void ActivateApp(GtkApplication* app, gpointer user_data){
+    GtkWidget* window;
+    GtkWidget* LeftMenu;
+    GtkWidget* RightPart;
+    
+    window = gtk_application_window_new(app);
+    gtk_window_set_title(GTK_WINDOW(window), "NoteAPP");
+    gtk_window_set_default_size(GTK_WINDOW(window), 1200, 800);
+
+    gtk_window_present(GTK_WINDOW(window));
+}
+
+int main(int argc, char **argv){
     // Set up
     char NoteDirectory[] = "/run/media/martin/Elements/School";
     int SelectionID = -1;
@@ -171,18 +195,15 @@ int main(){
     char** AllSectionsArr = malloc(256 * sizeof(char*));
     char** ProjectContent = malloc(256 * sizeof(char*));
 
+    GtkApplication* app = gtk_application_new("com.example.NoteApp", G_APPLICATION_FLAGS_NONE);
+
     AllSections(NoteDirectory, AllSectionsArr);
 
     // Main loop
-
-    /*
-    SetSection(&SelectionID, 0);
-    SetProject(&ProjectID, 0);
-    ProjectContent = GetSectionContent(NoteDirectory, &SelectionID, AllSectionsArr);
-
-   RunProjects("sh test.sh ", NoteDirectory, AllSectionsArr, ProjectContent, &SelectionID, &ProjectID);
-   */
+    g_signal_connect(app, "activate", G_CALLBACK(ActivateApp), NULL);
+    int status = g_application_run(G_APPLICATION(app), argc, argv);
 
     // Cleaning and shut down
+    g_object_unref(app);
     return 0;
 }
